@@ -1,0 +1,243 @@
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+      <meta charset="UTF-8">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0 user-scalable=no">
+      <title>Document</title>
+      <link rel="stylesheet" href="style.css">
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+      <script src="/socket.io/socket.io.js"></script>
+      <script src="jquery"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+  </head>
+
+  <!-- <script src="/socket.io/socket.io.js"></script>
+  <script src="jquery"></script>
+  <script>
+    $(function () {
+      var socket = io();
+      $('#spawn').submit(function(){
+      console.log('{pseudo:'+$('#pseudo').val()+'}');
+      var msg =  '{"pseudo":"'+$('#pseudo').val()+'"}';
+        socket.emit('spawn',JSON.parse(msg));
+        return false;
+      });
+      
+    
+    $('#input1').submit(function(){
+      console.log("input A pressed");
+      var msg =  '{"pseudo":"'+$('#pseudo').val()+'"}';
+      socket.emit('input1', JSON.parse(msg));
+      return false;
+    });
+      
+    $('#input2').submit(function(){
+      console.log("input B pressed");
+      var msg =  '{"pseudo":"'+$('#pseudo').val()+'"}';
+      socket.emit('input2', JSON.parse(msg));
+      return false;
+    });
+    
+      socket.on('chat', function(data){
+        $('#messages').append($('<li>').text("user#" + data.id + ": " + data.msg));
+      });
+    });
+  </script> -->
+
+
+  <script>
+
+      function effacerValeurParDefaut(input) {
+if (input.value == input.defaultValue) {
+  input.value = "";
+}
+}
+
+      $(function () {
+var socket = io();
+$('#submitButton').on("click", function(){
+  //On récupère la valeur dans l'input
+  var pseudoValue = $('#pseudo').val();
+
+  //On check si elle est vide
+  if(pseudoValue == ""){
+    alert("Vous devez renseigner votre pseudo pour jouer !!!");
+    return;
+  }
+
+  //On prépare le JSON
+  var msg =  '{"pseudo":"'+pseudoValue+'"}';
+  console.log(msg);
+
+  //On emet l'évenement au server
+  socket.emit('spawn',JSON.parse(msg));
+
+  //On affiche le pseudo dans le paragraphe
+  $("#pseudoAffiche").text(pseudoValue);
+
+  //On cache la page d'acceuil
+  $("#pseudoContainer").css('display', 'none');
+  $("#manetteGameplay").css('display', 'block');
+
+  //On arrête là !
+  return false;
+});
+});
+  
+  </script>
+      
+
+
+  <body>
+
+    <!-- ---------------------------------------- -->
+    <!-- ------------------ACCUEIL--------------- -->
+    <!-- ---------------------------------------- -->
+
+    <div id="pseudoContainer">
+            <div class="logo">
+              <img src="KIGLISS_LOGO" alt="" id="kigliss"><img src="/bg" alt="" id="bg">
+            </div>
+
+        <div class="all">
+
+            <img src="plane" alt="" id="plane">
+
+
+            <section>
+              <h2>Synopsis</h2>
+              <p>Un avion vient de s'écraser dans la jungle, essayez d’y rester le plus longtemps pour permettre à votre clan de le conquérir.</p>
+            </section>
+        
+            <section>
+              <h2>Pseudo :</h2> <input type="text" id="pseudo" placeholder="Votre pseudo..." onfocus="effacerValeurParDefaut(this)" maxlength="15"><br>
+            </section>
+            <button type="submit" id="submitButton">JOUER</button>
+        
+        </div>
+    </div>
+
+
+    <!-- ---------------------------------------- -->
+    <!-- ------------------MANETTE--------------- -->
+    <!-- ---------------------------------------- -->
+
+    <div id="manetteGameplay">
+
+
+          <div class="top">
+
+            <a href="/"><img src="CLOSE" alt="" class="exit"></a>
+
+          </div>
+
+      <div class="bottom">
+
+          <div class="right">
+
+              <p> Votre pseudo : <span id="pseudoAffiche"></span></p>
+
+              <!-- <div class="ps">
+                  <p class="pousser">Pousser</p>
+                  <button><img id="bouton1" src="push" alt=""></button>
+              </div> -->
+
+              <div class="ps">
+                  <p class="sauter">Sauter</p>
+                  <button><img id="bouton2" src="jump" alt=""></button>
+              </div>
+          </div>
+
+          <div class="left">
+            <div id="joystick">
+            <div id="joystick-handle"></div>
+            </div>        
+          </div>
+
+          <script>
+
+            let joystickHandle;
+            let joystickOffsetX = 0;
+            let joystickX = 0;
+        
+            function setup() {
+
+              createCanvas(0, 0);
+              joystickHandle = $('#joystick-handle');
+        
+              // Écouter les événements de déplacement de souris sur le joystick
+              joystickHandle.on('touchstart', function(e) {
+
+                $("#joystick-handle").css('transform', 'scale(1.2)');
+                $("#joystick-handle").css('transition', '1');
+
+                // Calculer la position horizontale de la souris par rapport au joystick
+                joystickOffsetX = e.touches[0].clientX - joystickHandle.offset().left;
+                joystickHandle.css('transition', 'none');
+                $(document).on('touchmove', onDrag);
+
+              });
+        
+              // Écouter les événements de fin de déplacement de souris sur le joystick
+              $(document).on('touchend', function(e) {
+                joystickOffsetX = 0;
+                joystickHandle.css('transition', 'all 0.2s');
+                $(document).off('touchmove', onDrag);
+                joystickX = 0;
+                console.log('Joystick en position neutre');
+
+                sendInfosToServer();
+        
+                // Remettre le joystick au centre
+                joystickHandle.css('transform', 'translateX(0px)');
+
+              });
+            }
+
+            function onDrag(e) {
+              // Calculer la position horizontale du joystick par rapport à la souris
+              let handleX = e.touches[0].clientX - joystickOffsetX - $('#joystick').offset().left - 110;
+        
+              // Limiter la position horizontale du joystick entre -75 et 75
+              handleX = Math.min(110, Math.max(-110, handleX));
+        
+              // Calculer la valeur normalisée de X entre -1 et 1
+              joystickX = handleX / 110;
+
+              sendInfosToServer();
+        
+              // Déplacer le joystick
+              joystickHandle.css('transform', 'translateX(' + handleX + 'px)');
+            }
+
+            //si le pseudo n'est nul on lance la fonction 
+            function sendInfosToServer(){
+              if($('#pseudo').val() == ""){
+                return;
+              }
+              var socket = io();
+              var msg = {
+                pseudo:"",
+                joystickX:""
+              }
+              msg.pseudo = $('#pseudo').val();
+              msg.joystickX = joystickX;
+              console.log(msg);
+
+              socket.emit('move',msg);
+            }
+
+          </script>
+
+
+      </div>
+
+    </div>
+
+
+
+  </body>
+  </html>
