@@ -52,6 +52,10 @@ app.get('/jquery0', function(req, res){
 	res.sendFile(__dirname + '/jquery0');
 });
 
+app.get('Baloo2-Bold', function(req, res){
+	res.sendFile(__dirname + '/typo/Baloo2-Bold.ttf');
+});
+
 
 
 var userId = 0;
